@@ -2,7 +2,7 @@ from elasticsearch import Elasticsearch
 import os
 
 # Connect to Elasticsearch
-api_key = os.getenv("API_KEY")
+api_key = os.getenv("ES_API_KEY")
 es =  Elasticsearch(
     "https://070e4c0d4e8c4aee93f3a029e9711984.us-central1.gcp.cloud.es.io:443",
     api_key=api_key

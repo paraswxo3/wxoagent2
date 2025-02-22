@@ -15,6 +15,8 @@ class BGSection(BaseModel):
     score: float
     clause_type: str
     content: str
+    explanation: str
+    classification: str
 
 class HTMLContent(BaseModel):
     html_content: str
@@ -38,7 +40,7 @@ def verify_api_key(api_key: str = Security(api_key_header)):
 @app.post("/find_sections", response_model=BGSections, dependencies=[Depends(verify_api_key)])
 def find_sections(input_doc: str = Body(..., embed=True)):
     response = extract_paragraphs_from_base64(pdf_base64=input_doc)
-    print(json.dumps(response))
+    # print(json.dumps(response))
     return response
 
 

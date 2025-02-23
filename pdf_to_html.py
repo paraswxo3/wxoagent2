@@ -56,7 +56,7 @@ def extract_paragraphs_from_base64(pdf_base64):
                             # not_matching_content[index]["explanation"] = analysis_output[0]["explanation"]
                             not_matching_content.append({"pageNumber":page_num,"section":section,"sectionNumber":section_num,"classification":classification,"explanation":explanation} | search_result)
                         else:
-                            not_matching_content.append({"pageNumber":page_num,"section":section,"sectionNumber":section_num,"classification":"Neutral","explanation":neutral_text} | search_result)
+                            not_matching_content.append({"pageNumber":page_num,"section":section,"sectionNumber":section_num,"classification":neutral_text,"explanation":neutral_explain} | search_result)
                         index1 = index1 + 1
                 html_content += f"<p section-num={section_num}>{section}</p>"
                 section_num = section_num + 1

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, File, Header, Depends, Security, HTTPException, Body, UploadFile
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
-from pdf_to_html import extract_paragraphs_from_base64
+from pdf_to_html import extract_paragraphs_from_base64,check_bg_amount_in_es
 from typing import List
 from bg_elser_query import searchBG_elser
 import json
@@ -26,6 +26,9 @@ class BGSections(BaseModel):
     not_matching_sections: List[BGSection]
     html_contents: List[HTMLContent]
 
+class BGAmount(BaseModel):
+    bg_amount: float
+
 api_key_header = APIKeyHeader(name="X-API-KEY", auto_error=True)
 
 def verify_api_key(api_key: str = Security(api_key_header)):
@@ -43,6 +46,11 @@ def find_sections(input_doc: str = Body(..., embed=True)):
     # print(json.dumps(response))
     return response
 
+@app.post("/find_bg_amount", response_model=BGAmount, dependencies=[Depends(verify_api_key)])
+def find_bg_amount(input_doc: str = Body(..., embed=True)):
+    response = check_bg_amount_in_es(pdf_base64=input_doc)
+    print("bg amount",response)
+    return {"bg_amount":response}
 
 if __name__ == '__main__':
     import uvicorn

@@ -4,7 +4,8 @@ import base64
 import json
 import io
 from bg_elser_query import searchBG_elser
-from analyze_clauses import analyze_clauses, extract_json_from_text
+from bg_elser_query import check_bg_amount_text_from_es
+from analyze_clauses import analyze_clauses, extract_json_from_text, get_bg_amount
 
 def pdf_to_base64(pdf_path):
     with open(pdf_path, "rb") as pdf_file:
@@ -71,6 +72,31 @@ def extract_paragraphs_from_base64(pdf_base64):
         response["not_matching_sections"] = not_matching_content_sorted
         response["html_contents"] = html_contents
     return response
+
+def check_bg_amount_in_es(pdf_base64):
+    bg_amount = 0.0
+    pdf_bytes = base64.b64decode(pdf_base64)
+    bytes = io.BytesIO()
+    bytes.write(pdf_bytes)
+    page_num = 0
+    match_section = ""
+    with pdfplumber.open(bytes) as pdf:
+        for page in pdf.pages:
+            if page_num == 0:
+                text = page.extract_text() + "\n"  # Extract text from each page
+                sections = smart_section_split(text=text)
+                highest_score = 0.0
+                for section in sections:
+                    score = check_bg_amount_text_from_es(section)
+                    if score > highest_score:
+                        highest_score = score
+                        match_section = section
+                        print(f"page number {page_num} score {highest_score}")
+            page_num = page_num + 1
+    print("highest_score",highest_score)
+    bg_amount = get_bg_amount(match_section)
+    return bg_amount
+
 
 def pdf_to_base64(pdf_path):
     with open(pdf_path, "rb") as pdf_file:

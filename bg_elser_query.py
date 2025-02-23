@@ -46,7 +46,28 @@ def searchBG_elser(text_to_search: str):
         return {"score":dict["_score"],"clause_type":dict["_source"]["clause"],"content":dict["_source"]["content"]}
     else:
         return {"score":0.0,"clause_type":"","content":""}
+
+def check_bg_amount_text_from_es(input_text: str):
+    response = es.search(
+        index="bank_guarantee_amount",
+        size=3,
+        query={
+            "text_expansion": {
+                "content_embedding": {
+                    "model_id": ".elser_model_2_linux-x86_64",
+                    "model_text": input_text
+                }
+            }
+        }
+    )
+    # print(response.body)
+    if len(response["hits"]["hits"]) > 0:
+        dict = response["hits"]["hits"][0]
+        # print("search score", dict["_score"])
+        return dict["_score"]
+
     
+
 # text = "This Guarantee shall remain valid from 10th Jan 2024 to 12 December 2024"
 # # text = "hello there"
 # response = searchBG_elser(text)

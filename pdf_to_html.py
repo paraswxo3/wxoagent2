@@ -29,10 +29,7 @@ def extract_paragraphs_from_base64(pdf_base64):
     bytes.write(pdf_bytes)
     neutral_explain = "This clause is standard and does not pose a risk"
     neutral_text = "Neutral"
-    llm_clause_input = ""  ## for the inital 4 not_matching_sections, call LLM to analyze them further
-    llm_input_index = 0
-    not_matching_clauses_indexes = []
-    not_matching_clauses_index = 0
+    index1 = 0
     with pdfplumber.open(bytes) as pdf:
         for page in pdf.pages:
             text = page.extract_text() + "\n"  # Extract text from each page
@@ -42,36 +39,37 @@ def extract_paragraphs_from_base64(pdf_base64):
                 if(search_result["score"] > 25.0):
                     matching_content.append({"pageNumber":page_num,"section":section,"sectionNumber":section_num,"classification":neutral_text,"explanation":neutral_explain} | search_result)
                 else:
-                    if len(section) > 70 and  search_result["score"] > 12.0:
-                        not_matching_content.append({"pageNumber":page_num,"section":section,"sectionNumber":section_num,"classification":neutral_text,"explanation":""} | search_result)
-                        if llm_input_index < 3:  ## for the inital 3 not_matching_sections, call LLM to analyze them further
-                            llm_clause_input += str(llm_input_index+1) + ". "+first_n_words(section,45) + "\n"
-                            llm_input_index += 1
-                            not_matching_clauses_indexes.append(not_matching_clauses_index)
-                        not_matching_clauses_index += 1
+                    if len(section) > 70 and  search_result["score"] > 15.0: ## i.e. likely of interest
+                        if index1 < 5:  ## for the inital 6 not_matching_sections, call LLM to analyze them further
+                            llm_clause_input = ""
+                            llm_clause_input = first_n_words(section,75)
+                            llm_clause_input = remove_numbers(llm_clause_input)
+                            llm_clause_input = str(1) + ". "+llm_clause_input + "\n"
+                            output = analyze_clauses(llm_clause_input)
+                            # print(llm_clause_input)
+                            # print(json.dumps(output))
+                            analysis_output = extract_json_from_text(output)
+                            print(json.dumps(analysis_output))
+                            classification = analysis_output[0]["classification"]
+                            explanation = analysis_output[0]["explanation"]
+                            # not_matching_content[index]["classification"] = analysis_output[0]["classification"]
+                            # not_matching_content[index]["explanation"] = analysis_output[0]["explanation"]
+                            not_matching_content.append({"pageNumber":page_num,"section":section,"sectionNumber":section_num,"classification":classification,"explanation":explanation} | search_result)
+                        else:
+                            not_matching_content.append({"pageNumber":page_num,"section":section,"sectionNumber":section_num,"classification":"Neutral","explanation":neutral_text} | search_result)
+                        index1 = index1 + 1
                 html_content += f"<p section-num={section_num}>{section}</p>"
                 section_num = section_num + 1
-            
             html_contents.append({"html_content":html_content})
             page_num = page_num + 1
             html_content = ""
-        analysis_output = []
-        print(llm_clause_input)
-        if len(not_matching_content) > 0:
-            output = analyze_clauses(llm_clause_input)
-            print("output",output)
-            analysis_output = extract_json_from_text(output)
-        print(json.dumps(analysis_output))
-        output_index = 0
-        for index in not_matching_clauses_indexes:
-            not_matching_content[index]["classification"] = analysis_output[output_index]["classification"]
-            not_matching_content[index]["explanation"] = analysis_output[output_index]["explanation"]
-            output_index += 1
         response["matching_sections"] = matching_content
         not_matching_content_sorted = sort_json_by_term(not_matching_content, "classification", "Onerous")
         response["not_matching_sections"] = not_matching_content_sorted
         response["html_contents"] = html_contents
     return response
+
+
 
 def check_bg_amount_in_es(pdf_base64):
     bg_amount = 0.0
@@ -97,6 +95,8 @@ def check_bg_amount_in_es(pdf_base64):
     bg_amount = get_bg_amount(match_section)
     return bg_amount
 
+def remove_numbers(text):
+    return re.sub(r'\d+', '', text)  # Replace numbers with an empty string
 
 def pdf_to_base64(pdf_path):
     with open(pdf_path, "rb") as pdf_file:

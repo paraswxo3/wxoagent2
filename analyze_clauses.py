@@ -70,7 +70,7 @@ def analyze_clauses(clauses):
     Label each of the above clauses as: 
     - **Onerous**: The clause poses a significant risk to the bank.
     - **Neutral**: The clause is standard and does not pose a risk.
-    Provide a very brief explanation (less than 50 words) for each classification. Do not use phrases like - 'This clause is Onerous because' in the explanation
+    Provide a very brief explanation for each classification. 
 
     ### **Expected Output (Strict JSON format)**:
     Return the result in **exactly** the following JSON format **without deviation**:
@@ -84,7 +84,7 @@ def analyze_clauses(clauses):
     ### Do not return any examples
     ### Do not include markdown formatting in your response.
     """
-    onerous_clauses = model.generate_text(prompt=llm_prompt, params={"decoding_method": "greedy", "max_new_tokens": 250})
+    onerous_clauses = model.generate_text(prompt=llm_prompt, params={"decoding_method": "greedy", "max_new_tokens": 1200})
     # print(key_assumptions)
     return onerous_clauses
 def extract_json_from_text(response_text):

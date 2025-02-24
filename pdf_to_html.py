@@ -93,6 +93,7 @@ def check_bg_amount_in_es(pdf_base64):
                         print(f"page number {page_num} score {highest_score}")
             page_num = page_num + 1
     print("highest_score",highest_score)
+    print("corresponding section",match_section)
     bg_amount = get_bg_amount(match_section)
     return bg_amount
 

@@ -35,7 +35,7 @@ def extract_paragraphs_from_base64(pdf_base64):
             text = page.extract_text() + "\n"  # Extract text from each page
             sections = smart_section_split(text=text)
             for section in sections:
-                section_preview = first_n_words(section,50)
+                section_preview = first_n_words(section,25)
                 search_result = searchBG_elser(text_to_search=section)
                 if(search_result["score"] > 25.0):
                     matching_content.append({"pageNumber":page_num,"section":section,"section_preview":section_preview,"sectionNumber":section_num,"classification":neutral_text,"explanation":neutral_explain} | search_result)

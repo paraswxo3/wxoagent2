@@ -11,7 +11,7 @@ app = FastAPI()
 class BGSection(BaseModel):
     pageNumber: int
     section: str
-    secton_preview: str
+    section_preview: str
     sectionNumber: int
     score: float
     clause_type: str

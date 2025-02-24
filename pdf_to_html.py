@@ -35,10 +35,10 @@ def extract_paragraphs_from_base64(pdf_base64):
             text = page.extract_text() + "\n"  # Extract text from each page
             sections = smart_section_split(text=text)
             for section in sections:
-                section_prevew = first_n_words(section,50)
+                section_preview = first_n_words(section,50)
                 search_result = searchBG_elser(text_to_search=section)
                 if(search_result["score"] > 25.0):
-                    matching_content.append({"pageNumber":page_num,"section":section,"section_prevew":section_prevew,"sectionNumber":section_num,"classification":neutral_text,"explanation":neutral_explain} | search_result)
+                    matching_content.append({"pageNumber":page_num,"section":section,"section_preview":section_preview,"sectionNumber":section_num,"classification":neutral_text,"explanation":neutral_explain} | search_result)
                 else:
                     if len(section) > 70 and  search_result["score"] > 15.0: ## i.e. likely of interest
                         if index1 < 5:  ## for the inital 6 not_matching_sections, call LLM to analyze them further

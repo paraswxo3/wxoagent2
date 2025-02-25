@@ -4,6 +4,7 @@ import json
 from ibm_watsonx_ai.foundation_models import ModelInference
 from ibm_watsonx_ai import APIClient
 from ibm_watsonx_ai import Credentials
+from bg_docs_actions import bg_query
 
 def query_doc(search_query,paragraphs):
     llm_paragraph = ""
@@ -41,6 +42,12 @@ def query_doc(search_query,paragraphs):
     
     response = model.generate_text(prompt=llm_prompt, params=params)
     return response
+
+def search_and_query_doc(input_query,filename):
+    docs = bg_query(input_query=input_query,filename=filename)
+    search_result = query_doc(search_query=input_query,paragraphs=docs)
+    print("search result",search_result)
+    return search_result
 
 # input_query = "What is the amount of this bank guarantee"
 # paragraphs = """

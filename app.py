@@ -5,7 +5,7 @@ from pdf_to_html import extract_paragraphs_from_base64,check_bg_amount_in_es
 from typing import List
 from bg_elser_query import searchBG_elser
 from bg_docs_actions import bg_query
-from bg_query_doc import query_doc
+from bg_query_doc import query_doc,search_and_query_doc
 import json
 
 app = FastAPI()
@@ -82,6 +82,12 @@ def find_in_bg_doc(query_input: FindInBGDocsInput = Body(..., embed=True)):
 @app.post("/bg_query_doc", response_model=QueryBGDocOutput, dependencies=[Depends(verify_api_key)])
 def bg_query_doc(query_input: QueryBGDocInput = Body(..., embed=True)):
     response = query_doc(paragraphs=query_input.paragraphs,search_query=query_input.user_query)
+    # print("response",json.dumps(response))
+    return {"response":response}
+
+@app.post("/bg_search_doc_and_query", response_model=QueryBGDocOutput, dependencies=[Depends(verify_api_key)])
+def bg_search_doc_and_query(query_input: FindInBGDocsInput = Body(..., embed=True)):
+    response = search_and_query_doc(filename=query_input.file_name,input_query=query_input.content)
     # print("response",json.dumps(response))
     return {"response":response}
 

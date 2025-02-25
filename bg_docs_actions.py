@@ -7,6 +7,7 @@ from elasticsearch import Elasticsearch, helpers
 
 api_key = os.getenv("ES_API_KEY")
 es_url = os.getenv("ES_URL")
+match_thres = os.getenv("DOC_SEARCH_THRESH",20)
 
 es =  Elasticsearch(
     es_url,
@@ -86,7 +87,8 @@ def extract_inner_hits(data):
                         for inner_doc in inner_hit_value["hits"]["hits"]:
                             text = inner_doc.get("_source", {}).get("text", "")
                             score = inner_doc.get("_score", 0)
-                            results.append({"content": text, "score": score})
+                            if score > match_thres:
+                                results.append({"content": text, "score": score})
     
     return results
 

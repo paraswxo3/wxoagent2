@@ -7,7 +7,7 @@ from elasticsearch import Elasticsearch, helpers
 
 api_key = os.getenv("ES_API_KEY")
 es_url = os.getenv("ES_URL")
-match_thres = os.getenv("DOC_SEARCH_THRESH",20)
+match_thres = os.getenv("DOC_SEARCH_THRESH",16)
 
 es =  Elasticsearch(
     es_url,
@@ -31,7 +31,7 @@ def upload_bg_doc_es(pdf_base64,filename):
 def bg_query(input_query,filename):
     response = es.search(
         index="bg_docs1",
-        size=3,
+        size=2,
         source={
             "excludes": ["passages.sparse"]
         },
@@ -72,7 +72,7 @@ def bg_query(input_query,filename):
     )
     # print(response.body)
     text = extract_inner_hits(json.dumps(response.body))
-    print("text",json.dumps(text))
+    # print("text",json.dumps(text))
     return text
 
 def extract_inner_hits(data):

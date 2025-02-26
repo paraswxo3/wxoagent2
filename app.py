@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from pdf_to_html import extract_paragraphs_from_base64,check_bg_amount_in_es
 from typing import List
 from bg_elser_query import searchBG_elser
-from bg_docs_actions import bg_query
+from bg_docs_actions import bg_query,upload_bg_doc_es
 from bg_query_doc import query_doc,search_and_query_doc
 import json
 
@@ -90,6 +90,12 @@ def bg_search_doc_and_query(query_input: FindInBGDocsInput = Body(..., embed=Tru
     response = search_and_query_doc(filename=query_input.file_name,input_query=query_input.content)
     # print("response",json.dumps(response))
     return {"response":response}
+
+@app.post("/upload_doc_to_es", response_model=QueryBGDocOutput, dependencies=[Depends(verify_api_key)])
+def upload_doc_to_es(doc_input: FindInBGDocsInput = Body(..., embed=True)):
+    response = upload_bg_doc_es(filename=doc_input.file_name,pdf_base64=doc_input.content)
+    print("response",response)
+    return {"response":"uploaded"}
 
 if __name__ == '__main__':
     import uvicorn

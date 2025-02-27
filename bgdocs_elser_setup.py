@@ -9,10 +9,10 @@ es =  Elasticsearch(
     api_key=api_key
 )
 
-es.indices.delete(index="bg_docs1", ignore_unavailable=True)
+es.indices.delete(index="bg_docs2", ignore_unavailable=True)
 es.indices.create(
-    index="bg_docs1",
-    settings={"index": {"default_pipeline": "bg_docs_ingest1"}},
+    index="bg_docs2",
+    settings={"index": {"default_pipeline": "bg_docs_ingest2"}},
     mappings={
     "_source": {
       "excludes": [

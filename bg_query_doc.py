@@ -50,8 +50,9 @@ def search_and_query_doc(input_query,filename):
     if docs:
         for index,doc in enumerate(docs):
             input_paragraphs.append(doc['content'])
+    # print("input_paragraphs",input_paragraphs)            
     search_result = query_doc(search_query=input_query,paragraphs=input_paragraphs)
-    print("search result",search_result)
+    # print("search result",search_result)
     return search_result
 
 # input_query = "What is the amount of this bank guarantee"

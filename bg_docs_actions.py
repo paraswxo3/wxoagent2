@@ -21,7 +21,7 @@ def upload_bg_doc_es(pdf_base64,filename):
     documents = []
     documents.append(
         {
-            "_index": "bg_docs1",
+            "_index": "bg_docs2",
             "_source": {"data": pdf_base64,"filename":filename}
         }
     )
@@ -30,7 +30,7 @@ def upload_bg_doc_es(pdf_base64,filename):
 
 def bg_query(input_query,filename):
     response = es.search(
-        index="bg_docs1",
+        index="bg_docs2",
         size=2,
         source={
             "excludes": ["passages.sparse"]
@@ -72,7 +72,7 @@ def bg_query(input_query,filename):
     )
     # print(response.body)
     text = extract_inner_hits(json.dumps(response.body))
-    # print("text",json.dumps(text))
+    print("text",json.dumps(text))
     return text
 
 def extract_inner_hits(data):

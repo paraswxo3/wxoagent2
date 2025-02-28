@@ -8,4 +8,3 @@ python-multipart
 langchain_ibm
 langchain
 ibm_watsonx_ai
-pypdf2htmlex

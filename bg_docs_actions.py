@@ -1,4 +1,4 @@
-import pdfplumber
+import pdf_test
 import re
 import base64
 import json
@@ -16,7 +16,7 @@ es =  Elasticsearch(
 def pdf_to_base64(pdf_path):
     with open(pdf_path, "rb") as pdf_file:
         return base64.b64encode(pdf_file.read()).decode("utf-8")
-    
+
 def upload_bg_doc_es(pdf_base64,filename):
     documents = []
     documents.append(

@@ -53,7 +53,7 @@ def search_and_query_doc(input_query,filename):
     # print("input_paragraphs",input_paragraphs)            
     search_result = query_doc(search_query=input_query,paragraphs=input_paragraphs)
     # print("search result",search_result)
-    return search_result
+    return {"answer":search_result,"sections":docs}
 
 # input_query = "What is the amount of this bank guarantee"
 # paragraphs = """

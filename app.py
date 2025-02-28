@@ -50,6 +50,10 @@ class QueryBGDocInput(BaseModel):
 class QueryBGDocOutput(BaseModel):
     response: str
 
+class QueryBGDocOutputWrapper(BaseModel):
+    sections: List[FindInBGDocsOutput]
+    answer: str
+
 api_key_header = APIKeyHeader(name="X-API-KEY", auto_error=True)
 
 def verify_api_key(api_key: str = Security(api_key_header)):
@@ -85,11 +89,11 @@ def bg_query_doc(query_input: QueryBGDocInput = Body(..., embed=True)):
     # print("response",json.dumps(response))
     return {"response":response}
 
-@app.post("/bg_search_doc_and_query", response_model=QueryBGDocOutput, dependencies=[Depends(verify_api_key)])
+@app.post("/bg_search_doc_and_query", response_model=QueryBGDocOutputWrapper, dependencies=[Depends(verify_api_key)])
 def bg_search_doc_and_query(query_input: FindInBGDocsInput = Body(..., embed=True)):
     response = search_and_query_doc(filename=query_input.file_name,input_query=query_input.content)
     # print("response",json.dumps(response))
-    return {"response":response}
+    return {"sections":response["sections"],"answer":response["answer"]}
 
 @app.post("/upload_doc_to_es", response_model=QueryBGDocOutput, dependencies=[Depends(verify_api_key)])
 def upload_doc_to_es(doc_input: FindInBGDocsInput = Body(..., embed=True)):

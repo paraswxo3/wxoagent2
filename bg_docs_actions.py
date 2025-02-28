@@ -88,6 +88,8 @@ def extract_inner_hits(data):
                             text = inner_doc.get("_source", {}).get("text", "")
                             score = inner_doc.get("_score", 0)
                             if score > match_thres:
+                                text = text.replace("\n\n", "\n")
+                                # print("TEXT",text)
                                 results.append({"content": text, "score": score})
     
     return results

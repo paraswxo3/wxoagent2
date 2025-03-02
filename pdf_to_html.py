@@ -14,7 +14,7 @@ def pdf_to_base64(pdf_path):
 
 def smart_section_split(text):
     """Splits paragraphs using sentence-ending punctuation and line breaks."""
-    return re.split(r'(?<=\.)\s*\n', text)  # Split at periods followed by newlines
+    return re.split(r'(?<=[.;_])\s*\n', text)  # Split at periods followed by newlines
 
 def extract_paragraphs_from_base64(pdf_base64):
     text = ""

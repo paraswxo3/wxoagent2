@@ -1,13 +1,16 @@
 from elasticsearch import Elasticsearch
 import requests
+import os
 
 # Connect to Elasticsearch
-api_key = "SWRLZ041VUJBSVlmZWZBX2NBcWk6c1c3a0ZIVUtSWk90bURIcWNkR2h4UQ=="
-cloud_id = "paraswxo2:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvJDAwNTkxOWNiMzhmOTQ2ODQ5M2ViMzkxZjU0NDk4ZWQ2JGYwNzM4MmNjMDVjYjQzNTFhMGEwNzYzNTFmMzdlMWNi"
+api_key = os.getenv("ES_API_KEY")
+es_url = os.getenv("ES_URL")
 es =  Elasticsearch(
-    "https://005919cb38f9468493eb391f54498ed6.us-central1.gcp.cloud.es.io:443",
-    api_key=api_key
+    es_url,
+    api_key=api_key,
+    verify_certs=False
 )
+
 
 es.indices.delete(index="bg_docs2", ignore_unavailable=True)
 es.indices.create(

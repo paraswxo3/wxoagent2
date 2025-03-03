@@ -15,7 +15,6 @@ def query_doc(search_query,paragraphs):
     API_KEY = os.getenv("WATSONX_API_KEY")
     PROJECT_ID   = os.getenv("PROJECT_ID")
     MODEL_ID   = "meta-llama/llama-3-1-70b-instruct"
-
     credentials = Credentials(api_key=API_KEY,url="https://us-south.ml.cloud.ibm.com")
   
     model = ModelInference(credentials=credentials,model_id=MODEL_ID,project_id=PROJECT_ID)

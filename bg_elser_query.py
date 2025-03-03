@@ -6,7 +6,8 @@ api_key = os.getenv("ES_API_KEY")
 es_url = os.getenv("ES_URL")
 es =  Elasticsearch(
     es_url,
-    api_key=api_key
+    api_key=api_key,
+    verify_certs=False
 )
 
 # List of example clauses

@@ -11,7 +11,8 @@ match_thres = os.getenv("DOC_SEARCH_THRESH",16)
 
 es =  Elasticsearch(
     es_url,
-    api_key=api_key
+    api_key=api_key,
+    verify_certs=False
 )
 def pdf_to_base64(pdf_path):
     with open(pdf_path, "rb") as pdf_file:

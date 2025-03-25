@@ -30,6 +30,7 @@ es =  Elasticsearch(
 #     es.index(index="bank_guarantee_clauses", id=i, body={"content": clause},timeout="120s")
 # print("Clauses Indexed Successfully!")
 def searchBG_elser(text_to_search: str):
+    print("---------- searching in ES")
     response = es.search(
         index="bank_guarantee_clauses",
         size=3,
@@ -43,6 +44,8 @@ def searchBG_elser(text_to_search: str):
         }
     )
     # print(response.body)
+    print("------- finished searching in ES")
+
     if len(response["hits"]["hits"]) > 0:
         dict = response["hits"]["hits"][0]
         return {"score":dict["_score"],"clause_type":dict["_source"]["clause"],"content":dict["_source"]["content"]}

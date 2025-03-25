@@ -48,14 +48,15 @@ def extract_paragraphs_from_base64(pdf_base64):
                     if  search_result["score"] > 0.0: ## i.e. likely of interest
                         if index1 < 5 and len(section) > 0:  ## for the inital 5 not_matching_sections, call LLM to analyze them further
                             llm_clause_input = ""
-                            llm_clause_input = first_n_words(section,75)
+                            llm_clause_input = first_n_words(section,1000)
                             llm_clause_input = remove_numbers(llm_clause_input)
-                            llm_clause_input = str(1) + ". "+llm_clause_input + "\n"
+                            # llm_clause_input = str(1) + ". "+llm_clause_input + "\n"
+                            llm_clause_input = llm_clause_input + "\n"
                             output = analyze_clauses(llm_clause_input)
                             # print(llm_clause_input)
-                            # print(json.dumps(output))
+                            # print("output ",output)
                             analysis_output = extract_json_from_text(output)
-                            print(json.dumps(analysis_output))
+                            # print(json.dumps(analysis_output))
                             classification = analysis_output[0]["classification"]
                             explanation = analysis_output[0]["explanation"]
                             # not_matching_content[index]["classification"] = analysis_output[0]["classification"]

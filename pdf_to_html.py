@@ -20,9 +20,6 @@ def extract_paragraphs_from_base64(pdf_base64):
     text = ""
     page_num = 1
     section_num = 1
-    html_contents = []
-    html_content = ""
-    matching_content = []
     not_matching_content = []
     response = {}
     pdf_bytes = base64.b64decode(pdf_base64)
@@ -42,41 +39,20 @@ def extract_paragraphs_from_base64(pdf_base64):
                     continue
                 section_preview = first_n_words(section,25)
                 search_result = searchBG_elser(text_to_search=section)
-                if(search_result["score"] < 0.0):
-                    matching_content.append({"pageNumber":page_num,"section":section,"section_preview":section_preview,"sectionNumber":section_num,"classification":neutral_text,"explanation":neutral_explain} | search_result)
-                else:
-                    if  search_result["score"] > 0.0: ## i.e. likely of interest
-                        if index1 < 5 and len(section) > 0:  ## for the inital 5 not_matching_sections, call LLM to analyze them further
-                            llm_clause_input = ""
-                            llm_clause_input = first_n_words(section,1000)
-                            llm_clause_input = remove_numbers(llm_clause_input)
-                            # llm_clause_input = str(1) + ". "+llm_clause_input + "\n"
-                            llm_clause_input = llm_clause_input + "\n"
-                            output = analyze_clauses(llm_clause_input)
-                            # print(llm_clause_input)
-                            # print("output ",output)
-                            analysis_output = extract_json_from_text(output)
-                            # print(json.dumps(analysis_output))
-                            classification = analysis_output[0]["classification"]
-                            explanation = analysis_output[0]["explanation"]
-                            # not_matching_content[index]["classification"] = analysis_output[0]["classification"]
-                            # not_matching_content[index]["explanation"] = analysis_output[0]["explanation"]
-                            not_matching_content.append({"pageNumber":page_num,"section":section,"section_preview":section_preview,"sectionNumber":section_num,"classification":classification,"explanation":explanation} | search_result)
-                        else:
-                            not_matching_content.append({"pageNumber":page_num,"section":section,"section_preview":section_preview,"sectionNumber":section_num,"classification":neutral_text,"explanation":neutral_explain} | search_result)
-                        index1 = index1 + 1
-                # html_content += f"<p section-num={section_num}>{section}</p>"
+                llm_clause_input = remove_numbers(section)
+                llm_clause_input = llm_clause_input + "\n"
+                output = analyze_clauses(llm_clause_input)
+                # analysis_output = extract_json_from_text(output)
+                analysis_output = [output]
+                classification = analysis_output[0]["classification"]
+                explanation = analysis_output[0]["explanation"]
+                not_matching_content.append({"pageNumber":page_num,"section":section,"section_preview":section_preview,"sectionNumber":section_num,"classification":classification,"explanation":explanation} | search_result)
+                index1 = index1 + 1
                 section_num = section_num + 1
-            html_contents.append({"html_content":html_content})
             page_num = page_num + 1
-            html_content = ""
-        response["matching_sections"] = matching_content
         not_matching_content_sorted = sort_json_by_term(not_matching_content, "classification", "Onerous")
         response["not_matching_sections"] = not_matching_content_sorted
-        response["html_contents"] = html_contents
     return response
-
-
 
 def check_bg_amount_in_es(pdf_base64):
     bg_amount = 0.0
@@ -125,11 +101,6 @@ def sort_json_by_term(json_array, key, term):
     return sorted(json_array, key=custom_sort)
 
 
-# Example Usage
-# pdf_file = "171120231905-CorrigendumFormats.pdf"  # Replace with your PDF file path
-# b64 = pdf_to_base64(pdf_file)
-# sections = extract_paragraphs_from_base64(b64)
-# print(json.dumps(sections))
-# for i, para in enumerate(paragraphs):  # Print first 5 paragraphs
-#     print(f"Paragraph {i}: {para}\n")
-
+# pdf_path = "/home/bparasuram/python/vsc/third-project/11FormatofBankGuaranteeWithAmount4.pdf"  # Replace with your actual PDF file path
+# base64_string = pdf_to_base64(pdf_path)
+# print(json.dumps(extract_paragraphs_from_base64(base64_string)))

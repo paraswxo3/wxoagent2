@@ -15,9 +15,9 @@ class BGSection(BaseModel):
     section: str
     section_preview: str
     sectionNumber: int
-    score: float
     clause_type: str
-    content: str
+    category_meaning: str
+    category_example: str
     explanation: str
     classification: str
 
@@ -25,9 +25,7 @@ class HTMLContent(BaseModel):
     html_content: str
 
 class BGSections(BaseModel):
-    matching_sections: List[BGSection]
     not_matching_sections: List[BGSection]
-    html_contents: List[HTMLContent]
 
 class BGAmount(BaseModel):
     bg_amount: float

@@ -4,14 +4,16 @@ import json
 from ibm_watsonx_ai.foundation_models import ModelInference
 from ibm_watsonx_ai import APIClient
 from ibm_watsonx_ai import Credentials
+from elasticsearch import Elasticsearch
+
 import re
 
 def get_bg_amount(phrase):
     params = {"decoding_method": "greedy", "max_new_tokens": 6000, "min_new_tokens": 1}
     API_KEY = os.getenv("WATSONX_API_KEY")
     PROJECT_ID   = os.getenv("PROJECT_ID")
-    MODEL_ID   = "mistralai/mixtral-8x7b-instruct-v01"
-    # MODEL_ID = "meta-llama/llama-3-3-70b-instruct"
+    # MODEL_ID   = "mistralai/mixtral-8x7b-instruct-v01"
+    MODEL_ID = "meta-llama/llama-3-3-70b-instruct"
 
     credentials = Credentials(api_key=API_KEY,url="https://us-south.ml.cloud.ibm.com")
   
@@ -50,46 +52,77 @@ def get_bg_amount(phrase):
     bg_amount = model.generate_text(prompt=llm_prompt, params={"decoding_method": "greedy", "max_new_tokens": 250})
     return extract_amount(bg_amount)
 
-def analyze_clauses(clauses):
-    params = {"decoding_method": "greedy", "max_new_tokens": 6000, "min_new_tokens": 1}
+def analyze_clauses_elastic(clause):
+    api_key = os.getenv("ES_API_KEY")
+    es_url = os.getenv("ES_URL")
+
+    es =  Elasticsearch(
+        es_url,
+        api_key=api_key,
+        verify_certs=False
+    )
+
+    response = es.search(
+        index="bank_guarantee_clauses_live",
+        size=3,
+        query={
+            "text_expansion": {
+                "embedding": {
+                    "model_id": ".elser_model_2_linux-x86_64",
+                    "model_text": clause
+                }
+            }
+        }
+    )
+
+    if len(response["hits"]["hits"]) > 0:
+        dict = response["hits"]["hits"][0]
+        return {"classification":dict["_source"]["classification"],"explanation":dict["_source"]["explanation"]}
+    else:
+        return None
+
+def analyze_clauses(clause):
+    use_es_analysis = api_key = os.getenv("USE_ES_ANALYSIS",default=False)
+    if(use_es_analysis):
+        return analyze_clauses_elastic(clause)
+    
+    params = {"decoding_method": "greedy", "temperature": 0.3, "max_new_tokens": 200, "min_new_tokens": 1,"repetition_penalty": 1.2}
     # model = "google/flan-ul2"
     API_KEY = os.getenv("WATSONX_API_KEY")
     PROJECT_ID   = os.getenv("PROJECT_ID")
+    # MODEL_ID   = "meta-llama/llama-3-3-70b-instruct"
     MODEL_ID   = "mistralai/mixtral-8x7b-instruct-v01"
 
     credentials = Credentials(api_key=API_KEY,url="https://us-south.ml.cloud.ibm.com")
   
-    model = ModelInference(credentials=credentials,model_id=MODEL_ID,project_id=PROJECT_ID)
+    model = ModelInference(credentials=credentials,model_id=MODEL_ID,project_id=PROJECT_ID,params=params)
 
     llm_prompt = f"""  
-    You are an expert in analyzing bank guarantees.  Analyze the following Bank Guarantee clauses. Identify if they are onerous and explain why.
+    You are an expert in analyzing bank guarantee documents and clauses. I will provide you with a text section, and your task is to carefully read the text and identify if there are any Bank Guarantee clauses present.
+    If Bank Guarantee clauses are found, evaluate if any of them are risky based on potential legal, financial, or operational issues. 
 
-    Clauses:
-    {clauses}
+    Provide the reponse strictly ONLY as JSON array with the following structure. Please do NOT include any commentary or additional text in the response.
 
-    Label each of the above clauses as: 
-    - **Onerous**: The clause poses a significant risk to the bank.
-    - **Neutral**: The clause is standard and does not pose a risk.
-    Provide a very brief explanation for each classification. 
-
-    ### **Expected Output (Strict JSON format)**:
-    Return the result in **exactly** the following JSON format **without deviation**:
+    [
         {{
-            [
-                {{"explanation": "First line with a very brief explanation here", "classification": "Onerous (High Risk)"}},
-                {{"explanation": "Second line with a very brief explanation here", "classification": "Neutral"}}
-            ]
+         "classification": "Onerous or Neutral",
+         "explanation": "A very brief explanation of why the clause is onerous or neutral."
         }}
-    ### Return only the JSON Object
-    ### Do not return any examples
-    ### Do not include markdown formatting in your response.
+    ]
+
+    Text Section:
+    {clause}
     """
+    print("---------- querying LLM ")
     onerous_clauses = model.generate_text(prompt=llm_prompt, params={"decoding_method": "greedy", "max_new_tokens": 1200})
     # print(key_assumptions)
+    print("---------- finished querying LLM",onerous_clauses)
     return onerous_clauses
+
 def extract_json_from_text(response_text):
     json_pattern = r'\[.*?\]'  # Match JSON objects `{}` or arrays `[]`
     matches = re.findall(json_pattern, response_text, re.DOTALL)  # Extract potential JSON
+    # print("matches ",matches)
     for match in matches:
         try:
             return json.loads(match)  # Return first valid JSON
@@ -135,3 +168,26 @@ def format_input(clauses):
 # phrase = "The Contract conditions provide that the CONTRACTOR shall pay a sum of Rs.65,98,000/- (Rupees _________________________________________) as full Contract Performance Guarantee in the form therein mentioned. The form of payment of Contract Performance Guarantee includes guarantee executed by"
 # print(get_bg_amount(phrase))
 
+# llm_prompt = f"""  
+#     You are an expert in analyzing bank guarantees.  Analyze the following Bank Guarantee clauses. Identify if they are onerous and explain why.
+
+#     Clauses:
+#     {clauses}
+
+#     Label each of the above clauses as: 
+#     - **Onerous**: The clause poses a significant risk to the bank.
+#     - **Neutral**: The clause is standard and does not pose a risk.
+#     Provide a very brief explanation for each classification. 
+
+#     ### **Expected Output (Strict JSON format)**:
+#     Return the result in **exactly** the following JSON format **without deviation**:
+#         {{
+#             [
+#                 {{"explanation": "First line with a very brief explanation here", "classification": "Onerous (High Risk)"}},
+#                 {{"explanation": "Second line with a very brief explanation here", "classification": "Neutral"}}
+#             ]
+#         }}
+#     ### Return only the JSON Object
+#     ### Do not return any examples
+#     ### Do not include markdown formatting in your response.
+#     """

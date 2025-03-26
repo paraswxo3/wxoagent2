@@ -5,6 +5,28 @@ from ibm_watsonx_ai.foundation_models import ModelInference
 from ibm_watsonx_ai import APIClient
 from ibm_watsonx_ai import Credentials
 from bg_docs_actions import bg_query
+import re
+
+def extract_json_from_string(text):
+    """
+    Extracts a JSON object or array from a string.
+    
+    Args:
+        text (str): The input string containing JSON data.
+    
+    Returns:
+        dict or list: Parsed JSON object or array if found, else None.
+    """
+    try:
+        # Use regex to find JSON objects or arrays
+        json_match = re.search(r'(\{.*?\}|\[.*?\])', text, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(0)
+            return json.loads(json_str)
+    except json.JSONDecodeError:
+        pass
+    
+    return None  # Return None if no valid JSON is found
 
 def query_doc(search_query,paragraphs):
     llm_paragraph = ""
@@ -63,3 +85,38 @@ def search_and_query_doc(input_query,filename):
 # response = query_doc(input_query,paragraphs)
 # print(response)
 
+def classify_section(section):
+    params = {"decoding_method": "greedy", "temperature": 0.3, "max_new_tokens": 200, "min_new_tokens": 1,"repetition_penalty": 1.2}
+    # model = "google/flan-ul2"
+    API_KEY = os.getenv("WATSONX_API_KEY")
+    PROJECT_ID   = os.getenv("PROJECT_ID")
+    MODEL_ID   = "meta-llama/llama-3-3-70b-instruct"
+    # MODEL_ID   = "mistralai/mixtral-8x7b-instruct-v01"
+
+    credentials = Credentials(api_key=API_KEY,url="https://us-south.ml.cloud.ibm.com")
+  
+    model = ModelInference(credentials=credentials,model_id=MODEL_ID,project_id=PROJECT_ID,params=params)
+
+    llm_prompt = f"""  
+    You are an expert in analyzing legal and financial documents, particularly Bank Guarantees. Given the following paragraph, classify it as either Onerous or Neutral based on its risk, obligations, and potential adverse consequences. Then, provide a clear and concise explanation for your classification
+    
+    Input Paragraph:
+    {section}
+    Output Format (JSON):
+    {{
+        \"classification\": \"Neutral\" | \"Onerous\",
+        \"explanation\": \"A brief explanation of why the paragraph was classified this way.\"
+    }}
+    Make sure the explanation highlights any restrictive terms, excessive obligations, unfair liability, or any other factor that makes the clause onerous (if applicable). If the paragraph is neutral, explain why it does not impose excessive risks or obligations
+    Please exclude commentaries in the response and only include the JSON structure.
+    """
+    print("---------- querying LLM ")
+    onerous_clauses = model.generate_text(prompt=llm_prompt, params={"decoding_method": "greedy", "max_new_tokens": 1200})
+    # print(key_assumptions)
+    print("---------- finished querying LLM",onerous_clauses)
+    json = extract_json_from_string(onerous_clauses)
+    print(json)
+    return extract_json_from_string(onerous_clauses)
+
+# section = "This paragraph is classed as Neutral because it sets out a clear timeframe (6 months from the date of final supply against PO) for the validity of the guarantee. It does not impose any excessive risks or obligations on either party beyond what would be expected in a standard bank guarantee."
+# classify_section(section)

@@ -5,7 +5,7 @@ from pdf_to_html import extract_paragraphs_from_base64,check_bg_amount_in_es
 from typing import List
 from bg_elser_query import searchBG_elser
 from bg_docs_actions import bg_query,upload_bg_doc_es
-from bg_query_doc import query_doc,search_and_query_doc
+from bg_query_doc import query_doc,search_and_query_doc,classify_section
 import json
 
 app = FastAPI()
@@ -29,6 +29,9 @@ class BGSections(BaseModel):
 
 class BGAmount(BaseModel):
     bg_amount: float
+
+class BGMessage(BaseModel):
+    content: str
 
 class FindInBGDocsInput(BaseModel):
     content: str
@@ -86,6 +89,14 @@ def bg_query_doc(query_input: QueryBGDocInput = Body(..., embed=True)):
     response = query_doc(paragraphs=query_input.paragraphs,search_query=query_input.user_query)
     # print("response",json.dumps(response))
     return {"response":response}
+
+@app.post("/bg_classify_section", response_model=BGMessage, dependencies=[Depends(verify_api_key)])
+def bg_classify_section(query_input: BGMessage = Body(..., embed=True)):
+    response = classify_section(section=query_input.content)
+    if(response):
+        return {"content":response["explanation"]}
+    else:
+        return {"content":"Sorry, unable to fetch the categorization, please try again later."}
 
 @app.post("/bg_search_doc_and_query", response_model=QueryBGDocOutputWrapper, dependencies=[Depends(verify_api_key)])
 def bg_search_doc_and_query(query_input: FindInBGDocsInput = Body(..., embed=True)):

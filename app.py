@@ -7,6 +7,9 @@ from bg_elser_query import searchBG_elser
 from bg_docs_actions import bg_query,upload_bg_doc_es
 from bg_query_doc import query_doc,search_and_query_doc,classify_section
 import json
+import base64
+import zipfile
+import io
 
 app = FastAPI()
 
@@ -109,6 +112,22 @@ def upload_doc_to_es(doc_input: FindInBGDocsInput = Body(..., embed=True)):
     response = upload_bg_doc_es(filename=doc_input.file_name,pdf_base64=doc_input.content)
     print("response",response)
     return {"response":"uploaded"}
+
+@app.post("/upload_zip_test", response_model=QueryBGDocOutput, dependencies=[Depends(verify_api_key)])
+def upload_zip_test(doc_input: FindInBGDocsInput = Body(..., embed=True)):
+    decoded_zip_data = base64.b64decode(doc_input.content)
+    zip_buffer = io.BytesIO(decoded_zip_data)
+
+    with zipfile.ZipFile(zip_buffer, 'r') as zf:
+        top_level_dirs = set()
+        for name in zf.namelist():
+            if '/' in name:  # Check if it's a directory or within a directory
+                top_level_dir = name.split('/', 1)[0]
+                top_level_dirs.add(top_level_dir)
+
+        num_top_level_dirs = len(top_level_dirs)
+        print(f"Number of top-level directories: {num_top_level_dirs}") #print to console.
+    return {"response":f"uploaded {num_top_level_dirs} directories"}
 
 if __name__ == '__main__':
     import uvicorn
